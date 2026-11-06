@@ -559,7 +559,7 @@
     let questions = [], currentQIndex = 0, wrongAttempts = 0, records = [];
     let startTimeObj = null, modalActionCallback = null, selectedYesNo = null, selectedOptionIndex = null;
     let currentUnitKey = 'unit1';
-    let recentAdvancedKeys = []; // 宣告跨局高階題目記憶陣列，防止未宣告引發 ReferenceError
+    let recentAdvancedKeys = []; 
 
     // Unit 2 Vars - Point & Drag Logic
     let u2Canvas = null, u2Ctx = null;
@@ -617,20 +617,74 @@
       { key: 'circle', name_zh: '圓形', name_en: 'Circle', count: 'infinite' }
     ];
 
-    // 擴充單元一高階題目 (至少12款獨特半圖範本，防止重複)
+    // Updated with more distinct distractors
     const ADVANCED_TEMPLATES = [
-      { key: 'hook_horn', name_zh: '彎鉤圖案', axisAngle: 0, halfPath: 'M 120,30 C 95,40 65,70 55,110 C 50,130 55,160 75,165 C 95,170 110,150 100,135 C 90,120 70,130 75,145 C 55,135 60,100 85,60 L 120,45 Z', distractorPaths: ['M 120,30 C 85,35 65,70 55,110 C 50,130 55,160 75,165 C 100,170 110,150 100,135 C 90,120 70,130 75,145 C 55,135 60,100 85,60 L 120,45 Z', 'M 120,30 C 95,50 75,60 55,110 C 50,130 55,160 75,165 C 95,170 120,150 100,135 C 90,120 70,130 75,145 C 55,135 60,100 85,60 L 120,45 Z'] },
-      { key: 'music_note', name_zh: '音符圖案', axisAngle: 0, halfPath: 'M 120,35 L 90,50 L 62,105 C 48,112 38,128 38,145 C 38,162 52,172 70,172 C 85,172 95,158 95,142 L 95,102 L 102,90 Z', distractorPaths: ['M 120,35 L 90,50 L 62,105 C 38,112 28,128 28,155 C 28,172 52,182 70,182 C 95,182 105,158 105,142 L 95,102 L 102,90 Z', 'M 120,20 L 90,50 L 62,105 C 48,112 38,128 38,145 C 38,162 52,172 70,172 C 85,172 95,158 95,142 L 95,102 L 102,90 Z'] },
-      { key: 'shield', name_zh: '盾牌圖案', axisAngle: 0, halfPath: 'M 120,30 L 70,60 L 90,95 L 55,130 L 85,130 L 85,175 L 120,175 Z', distractorPaths: ['M 120,30 L 70,60 L 55,130 L 85,130 L 85,175 L 120,175 Z', 'M 120,30 L 70,60 L 90,95 L 55,130 L 85,130 L 85,155 L 105,155 L 105,175 L 120,175 Z'] },
-      { key: 'gourd', name_zh: '花瓶圖案', axisAngle: 0, halfPath: 'M 120,40 C 100,40 90,52 90,68 C 90,82 108,88 102,98 C 85,112 55,118 55,148 C 55,178 95,185 120,185 Z', distractorPaths: ['M 120,40 C 80,40 70,52 70,68 C 70,82 108,88 102,98 C 85,112 55,118 55,148 C 55,178 95,185 120,185 Z', 'M 120,40 C 100,40 90,52 90,68 L 115,88 L 102,98 C 85,112 55,118 55,148 C 55,178 95,185 120,185 Z'] },
-      { key: 'crown', name_zh: '皇冠圖案', axisAngle: 0, halfPath: 'M 120,40 L 95,75 L 80,60 L 60,110 L 85,110 L 70,170 L 120,170 Z', distractorPaths: ['M 120,55 L 95,75 L 80,60 L 60,110 L 85,110 L 70,170 L 120,170 Z', 'M 120,40 L 105,60 L 95,50 L 80,60 L 60,110 L 85,110 L 70,170 L 120,170 Z'] },
-      { key: 'butterfly', name_zh: '蝴蝶圖案', axisAngle: 0, halfPath: 'M 120,35 C 90,35 50,60 50,95 C 50,120 85,115 75,130 C 60,145 55,165 70,175 C 90,185 110,165 120,160 Z', distractorPaths: ['M 120,35 L 50,60 L 50,95 L 85,115 L 75,130 L 55,165 L 70,175 L 110,165 L 120,160 Z', 'M 120,35 C 100,35 70,60 70,95 C 70,120 85,115 75,130 C 60,145 55,165 70,175 C 90,185 110,165 120,160 Z'] },
-      { key: 'heart_vase', name_zh: '心形圖案', axisAngle: 0, halfPath: 'M 120,40 C 90,20 60,50 60,85 C 60,120 100,150 120,180 Z', distractorPaths: ['M 120,40 C 100,20 80,50 80,85 C 80,120 100,150 120,180 Z', 'M 120,40 L 80,40 C 60,50 60,85 60,85 C 60,120 100,150 120,180 Z'] },
-      { key: 'star_tree', name_zh: '松樹圖案', axisAngle: 0, halfPath: 'M 120,35 L 95,70 L 105,70 L 80,110 L 95,110 L 65,155 L 105,155 L 105,180 L 120,180 Z', distractorPaths: ['M 120,35 L 95,70 L 105,70 L 65,155 L 105,155 L 105,180 L 120,180 Z', 'M 120,35 L 95,70 L 105,70 L 80,110 L 95,110 L 65,155 L 115,155 L 115,180 L 120,180 Z'] },
-      { key: 'key_hook', name_zh: '鑰匙圖案', axisAngle: 0, halfPath: 'M 120,45 L 90,70 L 65,115 C 52,128 55,155 78,165 C 95,172 108,158 108,142 L 88,138 C 88,145 80,150 72,145 C 65,140 65,128 75,118 L 98,82 Z', distractorPaths: ['M 120,45 L 90,70 L 65,115 L 55,155 L 78,165 L 108,142 L 88,138 L 72,145 L 75,118 L 98,82 Z', 'M 120,45 L 90,70 L 75,115 C 62,128 65,155 78,160 C 95,165 100,158 100,142 L 88,138 C 88,145 80,150 78,145 C 75,140 75,128 85,118 L 98,82 Z'] },
-      { key: 'rocket', name_zh: '火箭圖案', axisAngle: 0, halfPath: 'M 120,30 L 90,70 L 90,140 L 70,165 L 90,165 L 90,180 L 120,180 Z', distractorPaths: ['M 120,30 L 90,70 L 90,140 L 60,165 L 90,165 L 90,180 L 120,180 Z', 'M 120,30 L 90,70 L 90,140 L 70,165 L 85,165 L 85,180 L 120,180 Z'] },
-      { key: 'bell', name_zh: '鐘鈴圖案', axisAngle: 0, halfPath: 'M 120,35 C 100,35 90,45 90,60 C 90,110 60,135 60,160 L 110,160 C 110,175 115,180 120,180 Z', distractorPaths: ['M 120,35 C 100,35 90,45 90,60 C 90,110 50,135 50,160 L 110,160 C 110,175 115,180 120,180 Z', 'M 120,35 C 100,35 90,45 90,60 C 90,110 60,135 60,160 L 100,160 C 100,175 110,180 120,180 Z'] },
-      { key: 'lantern', name_zh: '燈籠圖案', axisAngle: 0, halfPath: 'M 120,30 L 95,30 L 95,45 L 60,75 L 60,135 L 95,165 L 95,180 L 120,180 Z', distractorPaths: ['M 120,30 L 95,30 L 95,45 L 50,75 L 50,135 L 95,165 L 95,180 L 120,180 Z', 'M 120,30 L 95,30 L 95,45 L 60,75 L 60,135 L 85,165 L 85,180 L 120,180 Z'] }
+      { key: 'hook_horn', name_zh: '彎鉤圖案', axisAngle: 0, 
+        halfPath: 'M 120,30 C 95,40 65,70 55,110 C 50,130 55,160 75,165 C 95,170 110,150 100,135 C 90,120 70,130 75,145 C 55,135 60,100 85,60 L 120,45 Z', 
+        distractorPaths: [
+          'M 120,30 L 65,70 L 55,110 C 50,130 55,160 75,165 C 95,170 110,150 100,135 C 90,120 70,130 75,145 C 55,135 60,100 85,60 L 120,45 Z', // Pointy top left
+          'M 120,30 C 95,40 65,70 55,110 L 75,165 L 100,135 C 90,120 70,130 75,145 C 55,135 60,100 85,60 L 120,45 Z' // Jagged bottom
+        ] 
+      },
+      { key: 'music_note', name_zh: '音符圖案', axisAngle: 0, 
+        halfPath: 'M 120,35 L 90,50 L 62,105 C 48,112 38,128 38,145 C 38,162 52,172 70,172 C 85,172 95,158 95,142 L 95,102 L 102,90 Z', 
+        distractorPaths: [
+          'M 120,35 L 90,50 L 62,105 L 38,145 L 70,172 L 95,142 L 95,102 L 102,90 Z', // Sharp diamond base
+          'M 120,35 L 70,50 L 62,105 C 48,112 38,128 38,145 C 38,162 52,172 70,172 C 85,172 95,158 95,142 L 95,102 L 102,90 Z' // Missing stem indent
+        ] 
+      },
+      { key: 'shield', name_zh: '盾牌圖案', axisAngle: 0, 
+        halfPath: 'M 120,30 L 70,60 L 90,95 L 55,130 L 85,130 L 85,175 L 120,175 Z', 
+        distractorPaths: [
+          'M 120,30 L 70,60 L 40,95 L 55,130 L 85,130 L 85,175 L 120,175 Z', // Extra spiky left
+          'M 120,30 L 70,60 L 90,95 L 55,130 L 85,130 L 60,175 L 120,175 Z' // Pointy bottom corner instead of straight
+        ] 
+      },
+      { key: 'gourd', name_zh: '花瓶圖案', axisAngle: 0, 
+        halfPath: 'M 120,40 C 100,40 90,52 90,68 C 90,82 108,88 102,98 C 85,112 55,118 55,148 C 55,178 95,185 120,185 Z', 
+        distractorPaths: [
+          'M 120,40 L 90,68 L 102,98 L 55,148 L 120,185 Z', // Straight lines, no curves
+          'M 120,40 C 100,40 90,52 90,68 C 90,82 108,88 102,98 C 85,112 30,118 55,148 C 55,178 95,185 120,185 Z' // Massive bulge on the side
+        ] 
+      },
+      { key: 'crown', name_zh: '皇冠圖案', axisAngle: 0, 
+        halfPath: 'M 120,40 L 95,75 L 80,60 L 60,110 L 85,110 L 70,170 L 120,170 Z', 
+        distractorPaths: [
+          'M 120,40 L 95,75 L 60,110 L 85,110 L 70,170 L 120,170 Z', // Missing inner point
+          'M 120,40 L 95,75 L 80,60 L 60,110 L 85,110 L 100,170 L 120,170 Z' // Wrong base angle
+        ] 
+      },
+      { key: 'butterfly', name_zh: '蝴蝶圖案', axisAngle: 0, 
+        halfPath: 'M 120,35 C 90,35 50,60 50,95 C 50,120 85,115 75,130 C 60,145 55,165 70,175 C 90,185 110,165 120,160 Z', 
+        distractorPaths: [
+          'M 120,35 C 90,35 50,60 50,95 L 75,130 C 60,145 55,165 70,175 C 90,185 110,165 120,160 Z', // Missing inner curve
+          'M 120,35 C 90,35 50,60 50,95 C 50,120 85,115 75,130 L 70,175 C 90,185 110,165 120,160 Z' // Missing bottom curve
+        ] 
+      },
+      { key: 'heart_vase', name_zh: '心形圖案', axisAngle: 0, halfPath: 'M 120,40 C 90,20 60,50 60,85 C 60,120 100,150 120,180 Z', 
+        distractorPaths: [
+          'M 120,40 L 70,50 L 60,85 C 60,120 100,150 120,180 Z', // Flat top left
+          'M 120,40 C 90,20 60,50 60,85 L 100,150 L 120,180 Z' // Straight bottom
+        ] 
+      },
+      { key: 'star_tree', name_zh: '松樹圖案', axisAngle: 0, halfPath: 'M 120,35 L 95,70 L 105,70 L 80,110 L 95,110 L 65,155 L 105,155 L 105,180 L 120,180 Z', 
+        distractorPaths: [
+          'M 120,35 L 95,70 L 105,70 L 65,155 L 105,155 L 105,180 L 120,180 Z', // Missing middle branch
+          'M 120,35 L 95,70 L 105,70 L 80,110 L 95,110 L 65,155 L 85,155 L 85,180 L 120,180 Z' // Super thin trunk
+        ] 
+      },
+      { key: 'key_hook', name_zh: '鑰匙圖案', axisAngle: 0, halfPath: 'M 120,45 L 90,70 L 65,115 C 52,128 55,155 78,165 C 95,172 108,158 108,142 L 88,138 C 88,145 80,150 72,145 C 65,140 65,128 75,118 L 98,82 Z', 
+        distractorPaths: [
+          'M 120,45 L 90,70 L 65,115 L 55,155 L 78,165 L 108,142 L 88,138 L 72,145 L 75,118 L 98,82 Z', // Completely jagged loop
+          'M 120,45 L 90,70 L 65,115 C 52,128 55,155 78,165 C 95,172 108,158 108,142 L 88,138 C 88,145 80,150 72,145 L 98,82 Z' // Filled inner loop
+        ] 
+      },
+      { key: 'rocket', name_zh: '火箭圖案', axisAngle: 0, halfPath: 'M 120,30 L 90,70 L 90,140 L 70,165 L 90,165 L 90,180 L 120,180 Z', 
+        distractorPaths: [
+          'M 120,30 L 90,70 L 90,140 L 50,165 L 90,165 L 90,180 L 120,180 Z', // Giant side wing
+          'M 120,30 L 90,70 L 90,140 L 70,165 L 90,165 L 120,165 Z' // Missing engine nozzle at bottom
+        ] 
+      }
     ];
 
     function renderBasicShapeSVG(shapeType, showSymmetryLine = false) {
@@ -651,6 +705,33 @@
     }
 
     function renderFoldedMisconceptionSVG(shapeType) {
+      if (shapeType === 'parallelogram') {
+        // Specific animation for slanted parallelogram misconception
+        return `
+          <div class="svg-container">
+            <svg width="240" height="220" viewBox="0 0 240 220">
+              <!-- Stationary Left Half -->
+              <polygon points="40,145 90,55 135,55 85,145" fill="#4ea8de" opacity="0.15" stroke="#1d3557" stroke-width="2"/>
+              <polygon points="40,145 90,55 135,55 85,145" fill="#4ea8de" stroke="#1d3557" stroke-width="3"/>
+              
+              <!-- Folding Right Half (animating with nested transforms for mathematically perfect slanted fold) -->
+              <g transform="translate(110, 100) rotate(29.05)">
+                <g>
+                  <animateTransform attributeName="transform" type="scale" values="1,1; -1,1; -1,1; 1,1; 1,1" keyTimes="0; 0.35; 0.5; 0.85; 1" dur="2.5s" repeatCount="indefinite" />
+                  <g transform="rotate(-29.05) translate(-110, -100)">
+                    <polygon points="135,55 180,55 130,145 85,145" fill="#f87171" stroke="#dc2626" stroke-width="3"/>
+                  </g>
+                </g>
+              </g>
+              
+              <!-- Slanted symmetry line connecting midpoints -->
+              <line x1="135" y1="55" x2="85" y2="145" stroke="#7c3aed" stroke-width="3" stroke-dasharray="6,4" />
+            </svg>
+          </div>
+        `;
+      }
+
+      // Default animation for others (vertical/horizontal fold)
       let isVertical = true; let axisX = 110, axisY = 100;
       if (shapeType === 'letter_s' || shapeType === 'letter_z') isVertical = false;
       let shapeContent = renderBasicShapeSVG(shapeType, false).replace(/<svg[^>]*>|<\/svg>/g, '');
@@ -703,7 +784,15 @@
 
     function generateUnit1Questions() {
       let list = [];
-      let basic = shuffleArray(BASIC_SHAPES_POOL).slice(0, 4);
+      
+      // Ensure parallelogram is always included in the 4 basic questions
+      let basicPool = [...BASIC_SHAPES_POOL];
+      let paraIndex = basicPool.findIndex(s => s.key === 'parallelogram');
+      let para = basicPool.splice(paraIndex, 1)[0];
+      let basic = shuffleArray(basicPool).slice(0, 3);
+      basic.push(para);
+      basic = shuffleArray(basic);
+      
       let poly = shuffleArray(INTERMEDIATE_POLYGONS).slice(0, 3);
       
       // 使用跨局記憶洗牌，確保高階題完全不重複
@@ -793,7 +882,6 @@
     function generateUnit2Questions() {
       let list = [];
       
-      // 初階：只有起點及終點在對稱軸（x=4 或 y=4）上，其餘中間點皆在對稱軸外 (x<4 或 y<4)
       let easyPool = [
         { type: 'easy-vert', path: [{x:4, y:0}, {x:1, y:1}, {x:1, y:4}, {x:2, y:6}, {x:4, y:8}] },
         { type: 'easy-vert', path: [{x:4, y:1}, {x:2, y:1}, {x:1, y:3}, {x:3, y:5}, {x:2, y:7}, {x:4, y:7}] },
@@ -803,7 +891,6 @@
         { type: 'easy-horiz', path: [{x:0, y:4}, {x:2, y:1}, {x:4, y:2}, {x:6, y:0}, {x:8, y:4}] }
       ];
 
-      // 中階：只有起點及終點在對角線上，中間點嚴格不在對角線上 (y > x 或 x+y < 8)
       let medPool = [
         { type: 'med-main', path: [{x:0, y:0}, {x:0, y:3}, {x:1, y:5}, {x:2, y:6}, {x:4, y:7}, {x:7, y:7}] },
         { type: 'med-main', path: [{x:1, y:1}, {x:1, y:4}, {x:2, y:6}, {x:5, y:7}, {x:7, y:7}] },
@@ -813,7 +900,6 @@
         { type: 'med-anti', path: [{x:0, y:8}, {x:1, y:4}, {x:3, y:2}, {x:6, y:2}] }
       ];
 
-      // 高階：十字對稱軸，起點在直對稱軸 (x=4)，終點在橫對稱軸 (y=4)，中間點皆在象限內 (x<4, y<4)
       let hardPool = [
         { type: 'hard-cross', path: [{x:4, y:0}, {x:1, y:0}, {x:1, y:2}, {x:3, y:3}, {x:0, y:4}] },
         { type: 'hard-cross', path: [{x:4, y:1}, {x:2, y:1}, {x:1, y:3}, {x:2, y:4}] },
@@ -910,7 +996,7 @@
           });
         }
       } else {
-        // Unit 2 - 先標記點，再按住連線
+        // Unit 2
         displayArea.innerHTML = `<div class="q-story-title">${currentLang === 'zh' ? `請在方格紙上標記對稱點，並按住拖曳連線以完成軸對稱圖形。` : `Please mark symmetric points and drag lines to complete the shape.`}</div>`;
         document.getElementById('u2-input').classList.remove('hidden');
         document.getElementById('btn-u2-undo').innerText = t.u2Undo;
@@ -948,7 +1034,6 @@
           showCustomModal(currentLang==='zh'?"提示":"Notice", t.u2RequireDraw, null, false); return;
         }
 
-        // 檢查點與線是否涵蓋目標結果
         let ptsMatch = q.targetNodes.every(tn => u2UserPoints.some(up => up.x === tn.x && up.y === tn.y));
         
         function sameLine(l1, l2) {
@@ -1118,7 +1203,18 @@
     function getCanvasPos(e) {
       let r = u2Canvas.getBoundingClientRect();
       let cX = e.clientX, cY = e.clientY;
-      if(e.touches && e.touches.length>0) { cX = e.touches[0].clientX; cY = e.touches[0].clientY; }
+      
+      // Fix for touch events (specially touchend which uses changedTouches)
+      if (e.touches && e.touches.length > 0) {
+        cX = e.touches[0].clientX; 
+        cY = e.touches[0].clientY;
+      } else if (e.changedTouches && e.changedTouches.length > 0) {
+        cX = e.changedTouches[0].clientX; 
+        cY = e.changedTouches[0].clientY;
+      }
+      
+      if (cX === undefined || cY === undefined) return { x: 0, y: 0 };
+      
       return { x: (cX - r.left)*(u2Canvas.width/r.width), y: (cY - r.top)*(u2Canvas.height/r.height) };
     }
 
@@ -1187,6 +1283,7 @@
       u2Canvas.addEventListener('mouseup', pointerUp);
       u2Canvas.addEventListener('mouseleave', pointerUp);
 
+      // Touch events with preventDefault to stop scrolling while drawing on iPad/Mobile
       u2Canvas.addEventListener('touchstart', (e)=>{ e.preventDefault(); pointerDown(e); }, {passive:false});
       u2Canvas.addEventListener('touchmove', (e)=>{ e.preventDefault(); pointerMove(e); }, {passive:false});
       u2Canvas.addEventListener('touchend', (e)=>{ e.preventDefault(); pointerUp(e); }, {passive:false});
