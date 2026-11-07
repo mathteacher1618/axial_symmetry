@@ -388,13 +388,13 @@
       <div id="page-home">
         <h2 id="home-subtitle" class="page-title">請選擇學習單元</h2>
         <div class="menu-grid">
-          <div class="card" id="btn-unit1">
+          <div class="card" id="btn-unit1" onclick="startQuiz('unit1')">
             <h3 id="title-unit1">單元一：分辨軸對稱圖形</h3>
             <p id="desc-opt1">練習分辨平面圖形是否軸對稱圖形、計算對稱軸數量及補全對稱圖像。</p>
           </div>
-          <div class="card" id="btn-unit2">
+          <div class="card" id="btn-unit2" onclick="startQuiz('unit2')">
             <h3 id="title-unit2">單元二：製作軸對稱圖形</h3>
-            <p id="desc-opt2">在方格紙上製作對稱圖形的另一半（包含初階、中階對角線及高階十字對稱）。</p>
+            <p id="desc-opt2">在方格紙上製作對稱圖形的另一半（先標記點，再按住點拖曳連線）。</p>
           </div>
         </div>
       </div>
@@ -559,9 +559,9 @@
     let questions = [], currentQIndex = 0, wrongAttempts = 0, records = [];
     let startTimeObj = null, modalActionCallback = null, selectedYesNo = null, selectedOptionIndex = null;
     let currentUnitKey = 'unit1';
-    let recentAdvancedKeys = []; 
+    let recentAdvancedKeys = [];
 
-    // Unit 2 Vars - Point & Drag Logic
+    // Unit 2 Vars
     let u2Canvas = null, u2Ctx = null;
     let u2GivenNodes = [], u2TargetNodes = [], u2GivenLines = [], u2TargetLines = [];
     let u2UserPoints = [], u2UserLines = [];
@@ -617,72 +617,114 @@
       { key: 'circle', name_zh: '圓形', name_en: 'Circle', count: 'infinite' }
     ];
 
-    // Updated with more distinct distractors
+    // 單元一高階題目：12 款獨特半圖範本。誘答選項嚴格為「特徵錯位/變形」（絕不使用非鏡像平移或上下倒置）
     const ADVANCED_TEMPLATES = [
-      { key: 'hook_horn', name_zh: '彎鉤圖案', axisAngle: 0, 
+      { 
+        key: 'hook_horn', name_zh: '彎鉤圖案', axisAngle: 0, 
         halfPath: 'M 120,30 C 95,40 65,70 55,110 C 50,130 55,160 75,165 C 95,170 110,150 100,135 C 90,120 70,130 75,145 C 55,135 60,100 85,60 L 120,45 Z', 
         distractorPaths: [
-          'M 120,30 L 65,70 L 55,110 C 50,130 55,160 75,165 C 95,170 110,150 100,135 C 90,120 70,130 75,145 C 55,135 60,100 85,60 L 120,45 Z', // Pointy top left
-          'M 120,30 C 95,40 65,70 55,110 L 75,165 L 100,135 C 90,120 70,130 75,145 C 55,135 60,100 85,60 L 120,45 Z' // Jagged bottom
+          'M 120,30 C 80,40 65,70 55,110 C 50,130 55,160 75,165 C 105,170 110,150 100,135 C 90,120 70,130 75,145 C 55,135 60,100 85,60 L 120,45 Z',
+          'M 120,30 C 95,50 75,60 55,110 C 50,130 55,160 75,165 C 95,170 120,150 100,135 C 90,120 70,130 75,145 C 55,135 60,100 85,60 L 120,45 Z',
+          'M 120,30 C 95,40 65,70 55,110 C 50,130 55,160 75,165 C 95,170 110,150 100,135 C 90,120 70,130 75,145 C 55,135 60,100 85,75 L 120,60 Z'
         ] 
       },
-      { key: 'music_note', name_zh: '音符圖案', axisAngle: 0, 
+      { 
+        key: 'music_note', name_zh: '音符圖案', axisAngle: 0, 
         halfPath: 'M 120,35 L 90,50 L 62,105 C 48,112 38,128 38,145 C 38,162 52,172 70,172 C 85,172 95,158 95,142 L 95,102 L 102,90 Z', 
         distractorPaths: [
-          'M 120,35 L 90,50 L 62,105 L 38,145 L 70,172 L 95,142 L 95,102 L 102,90 Z', // Sharp diamond base
-          'M 120,35 L 70,50 L 62,105 C 48,112 38,128 38,145 C 38,162 52,172 70,172 C 85,172 95,158 95,142 L 95,102 L 102,90 Z' // Missing stem indent
+          'M 120,35 L 90,50 L 62,105 C 38,112 28,128 28,155 C 28,172 52,182 70,182 C 95,182 105,158 105,142 L 95,102 L 102,90 Z',
+          'M 120,20 L 90,50 L 62,105 C 48,112 38,128 38,145 C 38,162 52,172 70,172 C 85,172 95,158 95,142 L 95,102 L 102,90 Z',
+          'M 120,35 L 90,50 L 62,105 L 38,145 L 70,172 L 95,142 L 95,102 L 102,90 Z'
         ] 
       },
-      { key: 'shield', name_zh: '盾牌圖案', axisAngle: 0, 
+      { 
+        key: 'shield', name_zh: '盾牌圖案', axisAngle: 0, 
         halfPath: 'M 120,30 L 70,60 L 90,95 L 55,130 L 85,130 L 85,175 L 120,175 Z', 
         distractorPaths: [
-          'M 120,30 L 70,60 L 40,95 L 55,130 L 85,130 L 85,175 L 120,175 Z', // Extra spiky left
-          'M 120,30 L 70,60 L 90,95 L 55,130 L 85,130 L 60,175 L 120,175 Z' // Pointy bottom corner instead of straight
+          'M 120,30 L 70,60 L 55,130 L 85,130 L 85,175 L 120,175 Z',
+          'M 120,30 L 70,60 L 90,95 L 55,130 L 85,130 L 85,155 L 105,155 L 105,175 L 120,175 Z',
+          'M 120,30 L 80,60 L 90,95 L 45,130 L 85,130 L 85,175 L 120,175 Z'
         ] 
       },
-      { key: 'gourd', name_zh: '花瓶圖案', axisAngle: 0, 
+      { 
+        key: 'gourd', name_zh: '花瓶圖案', axisAngle: 0, 
         halfPath: 'M 120,40 C 100,40 90,52 90,68 C 90,82 108,88 102,98 C 85,112 55,118 55,148 C 55,178 95,185 120,185 Z', 
         distractorPaths: [
-          'M 120,40 L 90,68 L 102,98 L 55,148 L 120,185 Z', // Straight lines, no curves
-          'M 120,40 C 100,40 90,52 90,68 C 90,82 108,88 102,98 C 85,112 30,118 55,148 C 55,178 95,185 120,185 Z' // Massive bulge on the side
+          'M 120,40 C 80,40 70,52 70,68 C 70,82 108,88 102,98 C 85,112 55,118 55,148 C 55,178 95,185 120,185 Z',
+          'M 120,40 C 100,40 90,52 90,68 L 115,88 L 102,98 C 85,112 55,118 55,148 C 55,178 95,185 120,185 Z',
+          'M 120,40 C 100,40 90,52 90,68 C 90,82 108,88 102,98 C 95,112 75,118 75,148 C 75,178 95,185 120,185 Z'
         ] 
       },
-      { key: 'crown', name_zh: '皇冠圖案', axisAngle: 0, 
+      { 
+        key: 'crown', name_zh: '皇冠圖案', axisAngle: 0, 
         halfPath: 'M 120,40 L 95,75 L 80,60 L 60,110 L 85,110 L 70,170 L 120,170 Z', 
         distractorPaths: [
-          'M 120,40 L 95,75 L 60,110 L 85,110 L 70,170 L 120,170 Z', // Missing inner point
-          'M 120,40 L 95,75 L 80,60 L 60,110 L 85,110 L 100,170 L 120,170 Z' // Wrong base angle
+          'M 120,55 L 95,75 L 80,60 L 60,110 L 85,110 L 70,170 L 120,170 Z',
+          'M 120,40 L 105,60 L 95,50 L 80,60 L 60,110 L 85,110 L 70,170 L 120,170 Z',
+          'M 120,40 L 95,75 L 80,60 L 60,110 L 85,110 L 50,170 L 120,170 Z'
         ] 
       },
-      { key: 'butterfly', name_zh: '蝴蝶圖案', axisAngle: 0, 
+      { 
+        key: 'butterfly', name_zh: '蝴蝶圖案', axisAngle: 0, 
         halfPath: 'M 120,35 C 90,35 50,60 50,95 C 50,120 85,115 75,130 C 60,145 55,165 70,175 C 90,185 110,165 120,160 Z', 
         distractorPaths: [
-          'M 120,35 C 90,35 50,60 50,95 L 75,130 C 60,145 55,165 70,175 C 90,185 110,165 120,160 Z', // Missing inner curve
-          'M 120,35 C 90,35 50,60 50,95 C 50,120 85,115 75,130 L 70,175 C 90,185 110,165 120,160 Z' // Missing bottom curve
+          'M 120,35 L 50,60 L 50,95 L 85,115 L 75,130 L 55,165 L 70,175 L 110,165 L 120,160 Z',
+          'M 120,35 C 100,35 70,60 70,95 C 70,120 85,115 75,130 C 60,145 55,165 70,175 C 90,185 110,165 120,160 Z',
+          'M 120,35 C 90,35 50,60 50,95 C 50,120 85,115 75,130 C 40,145 45,175 70,185 C 90,195 110,165 120,160 Z'
         ] 
       },
-      { key: 'heart_vase', name_zh: '心形圖案', axisAngle: 0, halfPath: 'M 120,40 C 90,20 60,50 60,85 C 60,120 100,150 120,180 Z', 
+      { 
+        key: 'heart_vase', name_zh: '心形圖案', axisAngle: 0, 
+        halfPath: 'M 120,40 C 90,20 60,50 60,85 C 60,120 100,150 120,180 Z', 
         distractorPaths: [
-          'M 120,40 L 70,50 L 60,85 C 60,120 100,150 120,180 Z', // Flat top left
-          'M 120,40 C 90,20 60,50 60,85 L 100,150 L 120,180 Z' // Straight bottom
+          'M 120,40 C 100,20 80,50 80,85 C 80,120 100,150 120,180 Z',
+          'M 120,40 L 80,40 C 60,50 60,85 60,85 C 60,120 100,150 120,180 Z',
+          'M 120,40 C 90,20 60,50 60,85 C 60,140 80,170 120,180 Z'
         ] 
       },
-      { key: 'star_tree', name_zh: '松樹圖案', axisAngle: 0, halfPath: 'M 120,35 L 95,70 L 105,70 L 80,110 L 95,110 L 65,155 L 105,155 L 105,180 L 120,180 Z', 
+      { 
+        key: 'star_tree', name_zh: '松樹圖案', axisAngle: 0, 
+        halfPath: 'M 120,35 L 95,70 L 105,70 L 80,110 L 95,110 L 65,155 L 105,155 L 105,180 L 120,180 Z', 
         distractorPaths: [
-          'M 120,35 L 95,70 L 105,70 L 65,155 L 105,155 L 105,180 L 120,180 Z', // Missing middle branch
-          'M 120,35 L 95,70 L 105,70 L 80,110 L 95,110 L 65,155 L 85,155 L 85,180 L 120,180 Z' // Super thin trunk
+          'M 120,35 L 95,70 L 105,70 L 65,155 L 105,155 L 105,180 L 120,180 Z',
+          'M 120,35 L 95,70 L 105,70 L 80,110 L 95,110 L 65,155 L 115,155 L 115,180 L 120,180 Z',
+          'M 120,35 L 75,70 L 105,70 L 80,110 L 95,110 L 65,155 L 105,155 L 105,180 L 120,180 Z'
         ] 
       },
-      { key: 'key_hook', name_zh: '鑰匙圖案', axisAngle: 0, halfPath: 'M 120,45 L 90,70 L 65,115 C 52,128 55,155 78,165 C 95,172 108,158 108,142 L 88,138 C 88,145 80,150 72,145 C 65,140 65,128 75,118 L 98,82 Z', 
+      { 
+        key: 'key_hook', name_zh: '鑰匙圖案', axisAngle: 0, 
+        halfPath: 'M 120,45 L 90,70 L 65,115 C 52,128 55,155 78,165 C 95,172 108,158 108,142 L 88,138 C 88,145 80,150 72,145 C 65,140 65,128 75,118 L 98,82 Z', 
         distractorPaths: [
-          'M 120,45 L 90,70 L 65,115 L 55,155 L 78,165 L 108,142 L 88,138 L 72,145 L 75,118 L 98,82 Z', // Completely jagged loop
-          'M 120,45 L 90,70 L 65,115 C 52,128 55,155 78,165 C 95,172 108,158 108,142 L 88,138 C 88,145 80,150 72,145 L 98,82 Z' // Filled inner loop
+          'M 120,45 L 90,70 L 65,115 L 55,155 L 78,165 L 108,142 L 88,138 L 72,145 L 75,118 L 98,82 Z',
+          'M 120,45 L 90,70 L 75,115 C 62,128 65,155 78,160 C 95,165 100,158 100,142 L 88,138 C 88,145 80,150 78,145 C 75,140 75,128 85,118 L 98,82 Z',
+          'M 120,45 L 90,70 L 65,115 C 52,128 55,155 78,165 C 95,172 108,158 108,142 L 115,140 L 115,130 L 108,128 L 88,138 Z'
         ] 
       },
-      { key: 'rocket', name_zh: '火箭圖案', axisAngle: 0, halfPath: 'M 120,30 L 90,70 L 90,140 L 70,165 L 90,165 L 90,180 L 120,180 Z', 
+      { 
+        key: 'rocket', name_zh: '火箭圖案', axisAngle: 0, 
+        halfPath: 'M 120,30 L 90,70 L 90,140 L 70,165 L 90,165 L 90,180 L 120,180 Z', 
         distractorPaths: [
-          'M 120,30 L 90,70 L 90,140 L 50,165 L 90,165 L 90,180 L 120,180 Z', // Giant side wing
-          'M 120,30 L 90,70 L 90,140 L 70,165 L 90,165 L 120,165 Z' // Missing engine nozzle at bottom
+          'M 120,30 L 90,70 L 90,140 L 60,165 L 90,165 L 90,180 L 120,180 Z',
+          'M 120,30 L 90,70 L 90,140 L 70,165 L 85,165 L 85,180 L 120,180 Z',
+          'M 120,30 L 95,70 L 95,140 L 75,165 L 95,165 L 95,180 L 120,180 Z'
+        ] 
+      },
+      { 
+        key: 'bell', name_zh: '鐘鈴圖案', axisAngle: 0, 
+        halfPath: 'M 120,35 C 100,35 90,45 90,60 C 90,110 60,135 60,160 L 110,160 C 110,175 115,180 120,180 Z', 
+        distractorPaths: [
+          'M 120,35 C 100,35 90,45 90,60 C 90,110 50,135 50,160 L 110,160 C 110,175 115,180 120,180 Z',
+          'M 120,35 C 100,35 90,45 90,60 C 90,110 60,135 60,160 L 100,160 C 100,175 110,180 120,180 Z',
+          'M 120,35 C 105,35 95,45 95,60 C 95,110 65,135 65,160 L 115,160 C 115,175 118,180 120,180 Z'
+        ] 
+      },
+      { 
+        key: 'lantern', name_zh: '燈籠圖案', axisAngle: 0, 
+        halfPath: 'M 120,30 L 95,30 L 95,45 L 60,75 L 60,135 L 95,165 L 95,180 L 120,180 Z', 
+        distractorPaths: [
+          'M 120,30 L 95,30 L 95,45 L 50,75 L 50,135 L 95,165 L 95,180 L 120,180 Z',
+          'M 120,30 L 95,30 L 95,45 L 60,75 L 60,135 L 85,165 L 85,180 L 120,180 Z',
+          'M 120,30 L 90,30 L 90,45 L 55,75 L 55,135 L 90,165 L 90,180 L 120,180 Z'
         ] 
       }
     ];
@@ -704,54 +746,52 @@
       return `<svg width="220" height="200" viewBox="0 0 220 200">${shapeSVG}${lineSVG}</svg>`;
     }
 
+    // 當學生誤以為非對稱圖形有對稱軸時，顯示摺疊動畫 (平行四邊形對折線為頂底兩邊中點斜線)
     function renderFoldedMisconceptionSVG(shapeType) {
+      const w = 240, h = 220;
+      let axisX = 110, axisY = 100, isVertical = true;
+      let shapeContent = renderBasicShapeSVG(shapeType, false);
+      shapeContent = shapeContent.replace(/<svg[^>]*>|<\/svg>/g, '');
+
+      let lineX1 = 110, lineY1 = 20, lineX2 = 110, lineY2 = 200;
+
       if (shapeType === 'parallelogram') {
-        // Specific animation for slanted parallelogram misconception
-        return `
-          <div class="svg-container">
-            <svg width="240" height="220" viewBox="0 0 240 220">
-              <!-- Stationary Left Half -->
-              <polygon points="40,145 90,55 135,55 85,145" fill="#4ea8de" opacity="0.15" stroke="#1d3557" stroke-width="2"/>
-              <polygon points="40,145 90,55 135,55 85,145" fill="#4ea8de" stroke="#1d3557" stroke-width="3"/>
-              
-              <!-- Folding Right Half (animating with nested transforms for mathematically perfect slanted fold) -->
-              <g transform="translate(110, 100) rotate(29.05)">
-                <g>
-                  <animateTransform attributeName="transform" type="scale" values="1,1; -1,1; -1,1; 1,1; 1,1" keyTimes="0; 0.35; 0.5; 0.85; 1" dur="2.5s" repeatCount="indefinite" />
-                  <g transform="rotate(-29.05) translate(-110, -100)">
-                    <polygon points="135,55 180,55 130,145 85,145" fill="#f87171" stroke="#dc2626" stroke-width="3"/>
-                  </g>
-                </g>
-              </g>
-              
-              <!-- Slanted symmetry line connecting midpoints -->
-              <line x1="135" y1="55" x2="85" y2="145" stroke="#7c3aed" stroke-width="3" stroke-dasharray="6,4" />
-            </svg>
-          </div>
-        `;
+        lineX1 = 135; lineY1 = 55; lineX2 = 85; lineY2 = 145;
+        axisX = 110; isVertical = true;
+      } else if (shapeType === 'letter_n' || shapeType === 'windmill') { axisX = 110; isVertical = true; }
+      else if (shapeType === 'letter_f' || shapeType === 'letter_l') { axisX = 80; lineX1 = 80; lineX2 = 80; isVertical = true; }
+      else if (shapeType === 'letter_s' || shapeType === 'letter_z') { axisY = 100; lineY1 = 100; lineY2 = 100; isVertical = false; }
+      else { axisX = 110; isVertical = true; }
+
+      let clipLeft = isVertical ? `<clipPath id="clip-stay"><rect x="-50" y="-50" width="${axisX + 50}" height="300"/></clipPath>` : `<clipPath id="clip-stay"><rect x="-50" y="-50" width="300" height="${axisY + 50}"/></clipPath>`;
+      let clipRight = isVertical ? `<clipPath id="clip-fold"><rect x="${axisX}" y="-50" width="${w - axisX + 50}" height="300"/></clipPath>` : `<clipPath id="clip-fold"><rect x="-50" y="${axisY}" width="300" height="${h - axisY + 50}"/></clipPath>`;
+      let transformOrigin = isVertical ? `${axisX}px 100px` : `110px ${axisY}px`;
+      let animClass = isVertical ? 'fold-horizontal' : 'fold-vertical';
+
+      let redShapeContent = shapeContent.replace(/fill="[^"]+"/g, 'fill="#f87171"').replace(/stroke="[^"]+"/g, 'stroke="#dc2626"');
+      if (!redShapeContent.includes('fill="#f87171"')) {
+         redShapeContent = redShapeContent.replace(/<g /g, '<g fill="#f87171" stroke="#dc2626" ').replace(/<path d/g, '<path fill="#f87171" stroke="#dc2626" d');
       }
 
-      // Default animation for others (vertical/horizontal fold)
-      let isVertical = true; let axisX = 110, axisY = 100;
-      if (shapeType === 'letter_s' || shapeType === 'letter_z') isVertical = false;
-      let shapeContent = renderBasicShapeSVG(shapeType, false).replace(/<svg[^>]*>|<\/svg>/g, '');
-      let clipLeft = isVertical ? `<clipPath id="clip-stay"><rect x="-50" y="-50" width="${axisX+50}" height="300"/></clipPath>` : `<clipPath id="clip-stay"><rect x="-50" y="-50" width="300" height="${axisY+50}"/></clipPath>`;
-      let clipRight = isVertical ? `<clipPath id="clip-fold"><rect x="${axisX}" y="-50" width="${240-axisX+50}" height="300"/></clipPath>` : `<clipPath id="clip-fold"><rect x="-50" y="${axisY}" width="300" height="${220-axisY+50}"/></clipPath>`;
-      let animClass = isVertical ? 'fold-horizontal' : 'fold-vertical';
-      let transformOrigin = isVertical ? `${axisX}px 100px` : `110px ${axisY}px`;
-      let redShape = shapeContent.replace(/fill="[^"]+"/g, 'fill="#f87171"').replace(/stroke="[^"]+"/g, 'stroke="#dc2626"');
-      if(!redShape.includes('fill="#f87171"')) { redShape = redShape.replace(/<g /g, '<g fill="#f87171" stroke="#dc2626" ').replace(/<path d/g, '<path fill="#f87171" stroke="#dc2626" d'); }
+      const labelFoldLine = currentLang === 'zh' ? "對折線" : "Fold line";
+      const labelOverlap = currentLang === 'zh' ? "原本位置" : "Original";
+      const labelMismatch = currentLang === 'zh' ? "未能重疊部分" : "Mismatched area";
 
       return `
-        <div class="svg-container">
-          <svg width="240" height="220" viewBox="0 0 240 220">
-            <defs>${clipLeft}${clipRight}</defs>
-            <g opacity="0.15">${shapeContent}</g>
-            <g clip-path="url(#clip-stay)">${shapeContent}</g>
-            <g clip-path="url(#clip-fold)" class="${animClass}" style="transform-origin: ${transformOrigin};">${redShape}</g>
-            <line x1="${isVertical ? axisX : 20}" y1="${isVertical ? 20 : axisY}" x2="${isVertical ? axisX : 220}" y2="${isVertical ? 200 : axisY}" stroke="#7c3aed" stroke-width="3" stroke-dasharray="6,4" />
-          </svg>
-        </div>
+        <svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+          <defs>${clipLeft}${clipRight}</defs>
+          <g opacity="0.15">${shapeContent}</g>
+          <g clip-path="url(#clip-stay)">${shapeContent}</g>
+          <g clip-path="url(#clip-fold)" class="${animClass}" style="transform-origin: ${transformOrigin};">${redShapeContent}</g>
+          <line x1="${lineX1}" y1="${lineY1}" x2="${lineX2}" y2="${lineY2}" stroke="#7c3aed" stroke-width="3" stroke-dasharray="6,4" />
+          <text x="${(lineX1+lineX2)/2}" y="${Math.min(lineY1, lineY2) - 8}" font-size="11" font-weight="bold" fill="#7c3aed" text-anchor="middle">${labelFoldLine}</text>
+          <g transform="translate(10, 205)" font-size="11" font-weight="bold">
+            <rect x="0" y="0" width="12" height="12" fill="#e2e8f0" rx="2"/>
+            <text x="16" y="10" fill="#475569">${labelOverlap}</text>
+            <rect x="85" y="0" width="12" height="12" fill="#ef4444" rx="2"/>
+            <text x="101" y="10" fill="#b91c1c">${labelMismatch}</text>
+          </g>
+        </svg>
       `;
     }
 
@@ -774,8 +814,15 @@
       return `<div class="svg-container"><svg width="240" height="210" viewBox="0 0 240 210"><g transform="rotate(${template.axisAngle}, 120, 105)"><path d="${template.halfPath}" fill="#ffb703" stroke="#fb8500" stroke-width="3"/><line x1="120" y1="15" x2="120" y2="195" stroke="#1d3557" stroke-width="3" stroke-dasharray="6,5"/></g></svg></div>`;
     }
 
+    // 所有 4 個選項均為沿對稱軸左右鏡像結合的完整圖形。誘答選項嚴格為右側「特徵錯位/變形」
     function renderAdvancedOptionSVG(template, option) {
-      return `<svg width="120" height="110" viewBox="0 0 240 210"><g transform="rotate(${template.axisAngle}, 120, 105)"><path d="${option.path}" fill="#ffb703" stroke="#fb8500" stroke-width="2.5"/><path d="${option.path}" transform="translate(240, 0) scale(-1, 1)" fill="#ffb703" stroke="#fb8500" stroke-width="2.5"/><line x1="120" y1="15" x2="120" y2="195" stroke="#1d3557" stroke-width="2" stroke-dasharray="4,4"/></g></svg>`;
+      return `<svg width="120" height="110" viewBox="0 0 240 210">
+        <g transform="rotate(${template.axisAngle}, 120, 105)">
+          <path d="${template.halfPath}" fill="#ffb703" stroke="#fb8500" stroke-width="2.5"/>
+          <path d="${option.path}" transform="translate(240, 0) scale(-1, 1)" fill="#ffb703" stroke="#fb8500" stroke-width="2.5"/>
+          <line x1="120" y1="15" x2="120" y2="195" stroke="#1d3557" stroke-width="2" stroke-dasharray="4,4"/>
+        </g>
+      </svg>`;
     }
 
     function renderAdvancedSolutionSVG(template) {
@@ -784,18 +831,9 @@
 
     function generateUnit1Questions() {
       let list = [];
-      
-      // Ensure parallelogram is always included in the 4 basic questions
-      let basicPool = [...BASIC_SHAPES_POOL];
-      let paraIndex = basicPool.findIndex(s => s.key === 'parallelogram');
-      let para = basicPool.splice(paraIndex, 1)[0];
-      let basic = shuffleArray(basicPool).slice(0, 3);
-      basic.push(para);
-      basic = shuffleArray(basic);
-      
+      let basic = shuffleArray(BASIC_SHAPES_POOL).slice(0, 4);
       let poly = shuffleArray(INTERMEDIATE_POLYGONS).slice(0, 3);
       
-      // 使用跨局記憶洗牌，確保高階題完全不重複
       let freshAdv = ADVANCED_TEMPLATES.filter(a => !recentAdvancedKeys.includes(a.key));
       if (freshAdv.length < 3) {
         freshAdv = ADVANCED_TEMPLATES;
@@ -807,15 +845,21 @@
 
       basic.forEach(i => list.push({ unit: 'unit1', tier: 'easy', type: 'basic', shapeKey: i.key, name_zh: i.name_zh, name_en: i.name_en, targetAns: i.isSymmetric, isSymmetric: i.isSymmetric }));
       poly.forEach(i => list.push({ unit: 'unit1', tier: 'medium', type: 'intermediate', polygonKey: i.key, name_zh: i.name_zh, name_en: i.name_en, targetCount: i.count }));
+      
+      // 4 個選項均為左右鏡像組合，誘答選項均為「特徵錯位/變形」
       advTemplates.forEach(t => {
-        let opts = [{ path: t.halfPath, isCorrect: true }, { path: t.distractorPaths[0], isCorrect: false }, { path: t.distractorPaths[1], isCorrect: false }];
-        opts = shuffleArray([...opts, { path: t.distractorPaths[0], isCorrect: false }]);
-        list.push({ unit: 'unit1', tier: 'hard', type: 'advanced', template: t, options: opts, correctIndex: opts.findIndex(o => o.isCorrect) });
+        let opts = [
+          { path: t.halfPath, isCorrect: true },
+          { path: t.distractorPaths[0], isCorrect: false },
+          { path: t.distractorPaths[1], isCorrect: false },
+          { path: t.distractorPaths[2], isCorrect: false }
+        ];
+        let shuffledOpts = shuffleArray(opts);
+        list.push({ unit: 'unit1', tier: 'hard', type: 'advanced', template: t, options: shuffledOpts, correctIndex: shuffledOpts.findIndex(o => o.isCorrect) });
       });
       return list;
     }
 
-    // 單元二題目生成邏輯：絕對不跨越對稱軸，貼合對稱軸
     function getSymmetricNodesAndLines(givenNodes, type) {
       function reflectPt(pt) {
         if (type === 'easy-vert') return { x: 8 - pt.x, y: pt.y };
@@ -824,22 +868,10 @@
         if (type === 'med-anti') return { x: 8 - pt.y, y: 8 - pt.x };
         return pt;
       }
-      
-      let targetNodes = [];
-      if (type === 'hard-cross') {
-        let res = new Map();
-        givenNodes.forEach(pt => {
-          let pts = [
-            { x: pt.x, y: pt.y },
-            { x: 8 - pt.x, y: pt.y },
-            { x: pt.x, y: 8 - pt.y },
-            { x: 8 - pt.x, y: 8 - pt.y }
-          ];
-          pts.forEach(p => res.set(`${p.x},${p.y}`, p));
-        });
-        targetNodes = Array.from(res.values());
-      } else {
-        targetNodes = givenNodes.map(reflectPt);
+
+      function sameLine(l1, l2) {
+        return (l1.p1.x===l2.p1.x && l1.p1.y===l2.p1.y && l1.p2.x===l2.p2.x && l1.p2.y===l2.p2.y) ||
+               (l1.p1.x===l2.p2.x && l1.p1.y===l2.p2.y && l1.p2.x===l2.p1.x && l1.p2.y===l2.p1.y);
       }
 
       function getLinesFromNodes(nodes) {
@@ -852,36 +884,49 @@
 
       let givenLines = getLinesFromNodes(givenNodes);
       let targetLines = [];
+      let tLineSet = new Map();
+
+      function addTargetLine(p1, p2) {
+        let isGiven = givenLines.some(gl => sameLine(gl, {p1, p2}));
+        if (!isGiven) {
+          let key = p1.x < p2.x || (p1.x === p2.x && p1.y < p2.y) ? `${p1.x},${p1.y}-${p2.x},${p2.y}` : `${p2.x},${p2.y}-${p1.x},${p1.y}`;
+          if (!tLineSet.has(key)) {
+            tLineSet.set(key, { p1, p2 });
+          }
+        }
+      }
 
       if (type === 'hard-cross') {
-        let lSet = new Set();
-        function addL(p1, p2) {
-          let key = p1.x < p2.x || (p1.x === p2.x && p1.y < p2.y) ? `${p1.x},${p1.y}-${p2.x},${p2.y}` : `${p2.x},${p2.y}-${p1.x},${p1.y}`;
-          lSet.add(key);
-        }
         givenLines.forEach(l => {
           let p1 = l.p1, p2 = l.p2;
           let r1 = {x: 8-p1.x, y: p1.y}, r2 = {x: 8-p2.x, y: p2.y};
           let d1 = {x: p1.x, y: 8-p1.y}, d2 = {x: p2.x, y: 8-p2.y};
           let c1 = {x: 8-p1.x, y: 8-p1.y}, c2 = {x: 8-p2.x, y: 8-p2.y};
-          addL(p1, p2); addL(r1, r2); addL(d1, d2); addL(c1, c2);
+          addTargetLine(r1, r2);
+          addTargetLine(d1, d2);
+          addTargetLine(c1, c2);
         });
-        lSet.forEach(k => {
-          let [a, b] = k.split('-');
-          let [x1, y1] = a.split(',').map(Number);
-          let [x2, y2] = b.split(',').map(Number);
-          targetLines.push({ p1: {x: x1, y: y1}, p2: {x: x2, y: y2} });
-        });
+        targetLines = Array.from(tLineSet.values());
       } else {
-        targetLines = givenLines.map(l => ({ p1: reflectPt(l.p1), p2: reflectPt(l.p2) }));
+        givenLines.forEach(l => {
+          let rp1 = reflectPt(l.p1), rp2 = reflectPt(l.p2);
+          addTargetLine(rp1, rp2);
+        });
+        targetLines = Array.from(tLineSet.values());
       }
+
+      let nMap = new Map();
+      targetLines.forEach(l => {
+        nMap.set(`${l.p1.x},${l.p1.y}`, l.p1);
+        nMap.set(`${l.p2.x},${l.p2.y}`, l.p2);
+      });
+      let targetNodes = Array.from(nMap.values());
 
       return { targetNodes, targetLines, givenLines };
     }
 
     function generateUnit2Questions() {
       let list = [];
-      
       let easyPool = [
         { type: 'easy-vert', path: [{x:4, y:0}, {x:1, y:1}, {x:1, y:4}, {x:2, y:6}, {x:4, y:8}] },
         { type: 'easy-vert', path: [{x:4, y:1}, {x:2, y:1}, {x:1, y:3}, {x:3, y:5}, {x:2, y:7}, {x:4, y:7}] },
@@ -938,6 +983,7 @@
         console.error("Failed to start quiz:", err);
       }
     }
+    window.startQuiz = startQuiz;
 
     function selectYesNo(val) {
       selectedYesNo = val;
@@ -996,7 +1042,6 @@
           });
         }
       } else {
-        // Unit 2
         displayArea.innerHTML = `<div class="q-story-title">${currentLang === 'zh' ? `請在方格紙上標記對稱點，並按住拖曳連線以完成軸對稱圖形。` : `Please mark symmetric points and drag lines to complete the shape.`}</div>`;
         document.getElementById('u2-input').classList.remove('hidden');
         document.getElementById('btn-u2-undo').innerText = t.u2Undo;
@@ -1029,20 +1074,16 @@
           isCorrect = (selectedOptionIndex === q.correctIndex); userAnsDisplay = `選項 ${['A','B','C','D'][selectedOptionIndex]}`;
         }
       } else {
-        // Unit 2 - 比對點與連線
         if (u2UserPoints.length === 0 || u2UserLines.length === 0) {
           showCustomModal(currentLang==='zh'?"提示":"Notice", t.u2RequireDraw, null, false); return;
         }
-
-        let ptsMatch = q.targetNodes.every(tn => u2UserPoints.some(up => up.x === tn.x && up.y === tn.y));
-        
         function sameLine(l1, l2) {
           return (l1.p1.x===l2.p1.x && l1.p1.y===l2.p1.y && l1.p2.x===l2.p2.x && l1.p2.y===l2.p2.y) ||
                  (l1.p1.x===l2.p2.x && l1.p1.y===l2.p2.y && l1.p2.x===l2.p1.x && l1.p2.y===l2.p1.y);
         }
-        let linesMatch = q.targetLines.every(tl => u2UserLines.some(ul => sameLine(ul, tl)));
-
-        isCorrect = ptsMatch && linesMatch;
+        let allRequiredLinesDrawn = q.targetLines.every(tl => u2UserLines.some(ul => sameLine(ul, tl)));
+        let noExtraLinesDrawn = u2UserLines.length === q.targetLines.length && u2UserLines.every(ul => q.targetLines.some(tl => sameLine(ul, tl)));
+        isCorrect = allRequiredLinesDrawn && noExtraLinesDrawn;
         userAnsDisplay = t.u2AnsText;
       }
 
@@ -1161,61 +1202,99 @@
       document.getElementById('val-tier2-mastery').innerText = `${t2c} / ${t2t}`;
       document.getElementById('val-tier3-mastery').innerText = `${t3c} / ${t3t}`;
 
-      const cl = document.getElementById('correct-list-container'), wl = document.getElementById('wrong-list-container');
-      cl.innerHTML = ''; wl.innerHTML = '';
-      let cItems = records.filter(r => r && r.isCorrectOnFirstTry), wItems = records.filter(r => !r || !r.isCorrectOnFirstTry);
-      if(cItems.length===0) cl.innerHTML = `<div style="font-size:0.95rem; color:#718096; padding-left:5px;">${t.noCorrect}</div>`;
-      else cItems.forEach(i => cl.innerHTML += `<div class="item-card-correct"><div>${t.questionLabel.replace('{n}',i.qIndex)}</div><div>${t.ansLabel} : ${i.targetAns}</div></div>`);
-      
-      if(wItems.length===0) wl.innerHTML = `<div style="font-size:0.95rem; color:#38a169; padding-left:5px;">${t.noWrong}</div>`;
-      else wItems.forEach(i => wl.innerHTML += `<div class="item-card-wrong"><div>${t.questionLabel.replace('{n}',i.qIndex)}</div><div>${t.yourAnsLabel} : ${i.userFirstWrong||'-'} | ${t.correctAnsLabel} : ${i.targetAns}</div></div>`);
-    }
+      const correctContainer = document.getElementById('correct-list-container');
+      correctContainer.innerHTML = '';
+      const correctItems = records.filter(r => r && r.isCorrectOnFirstTry);
+      if (correctItems.length === 0) {
+        correctContainer.innerHTML = `<div style="font-size:0.95rem; color:#718096; padding-left:5px;">${t.noCorrect}</div>`;
+      } else {
+        correctItems.forEach(item => {
+          const qText = t.questionLabel.replace('{n}', item.qIndex);
+          const nameStr = currentLang === 'zh' ? (item.questionObj.name_zh || item.questionObj.template?.name_zh || '') : (item.questionObj.name_en || item.questionObj.template?.name_en || '');
+          const itemDiv = document.createElement('div');
+          itemDiv.className = 'item-card-correct';
+          itemDiv.innerHTML = `<div class="item-q-title">${qText} ${nameStr ? ': ' + nameStr : ''}</div><div class="item-ans-text">${t.ansLabel} : ${item.targetAns}</div>`;
+          correctContainer.appendChild(itemDiv);
+        });
+      }
 
-    function goHome() {
-      document.getElementById('page-report').classList.add('hidden'); document.getElementById('page-quiz').classList.add('hidden');
-      document.getElementById('page-home').classList.remove('hidden');
-    }
-
-    function askReturnHome() { showCustomModal(i18n[currentLang].modalReturnTitle, i18n[currentLang].modalReturnMsg, goHome, true); }
-    function showCustomModal(title, msg, onConfirm, showCancel) {
-      document.getElementById('modal-title').innerText = title; document.getElementById('modal-msg').innerText = msg;
-      modalActionCallback = onConfirm;
-      document.getElementById('modal-cancel-btn').style.display = showCancel ? 'block' : 'none';
-      document.getElementById('custom-modal').classList.add('active');
-    }
-    function closeModal() { document.getElementById('custom-modal').classList.remove('active'); modalActionCallback = null; }
-    function confirmModalAction() { if(modalActionCallback) modalActionCallback(); closeModal(); }
-    function downloadReportImage() {
-      if(typeof html2canvas !== 'undefined') {
-        html2canvas(document.getElementById('report-card-to-capture'), {scale: 2}).then(c => {
-          let l = document.createElement('a'); l.download = `Symmetry_Report_${Date.now()}.png`; l.href = c.toDataURL('image/png'); l.click();
+      const wrongContainer = document.getElementById('wrong-list-container');
+      wrongContainer.innerHTML = '';
+      const wrongItems = records.filter(r => !r || !r.isCorrectOnFirstTry);
+      if (wrongItems.length === 0) {
+        wrongContainer.innerHTML = `<div style="font-size:0.95rem; color:#38a169; padding-left:5px;">${t.noWrong}</div>`;
+      } else {
+        wrongItems.forEach(item => {
+          if (!item) return;
+          const qText = t.questionLabel.replace('{n}', item.qIndex);
+          const nameStr = currentLang === 'zh' ? (item.questionObj.name_zh || item.questionObj.template?.name_zh || '') : (item.questionObj.name_en || item.questionObj.template?.name_en || '');
+          const userAnsDisplay = item.userFirstWrong !== null ? item.userFirstWrong : '-';
+          const itemDiv = document.createElement('div');
+          itemDiv.className = 'item-card-wrong';
+          itemDiv.innerHTML = `<div class="item-q-title">${qText} ${nameStr ? ': ' + nameStr : ''}</div><div class="item-ans-text">${t.yourAnsLabel} : ${userAnsDisplay} | ${t.correctAnsLabel} : ${item.targetAns}</div>`;
+          wrongContainer.appendChild(itemDiv);
         });
       }
     }
 
-    // Grid Canvas Logic for Unit 2 - 點選標記點與拖曳連線
+    function goHome() {
+      document.getElementById('page-report').classList.add('hidden');
+      document.getElementById('page-quiz').classList.add('hidden');
+      document.getElementById('page-home').classList.remove('hidden');
+    }
+
+    function askReturnHome() {
+      const t = i18n[currentLang];
+      showCustomModal(t.modalReturnTitle, t.modalReturnMsg, () => { goHome(); }, true);
+    }
+
+    function showCustomModal(title, msg, onConfirm, showCancel = true) {
+      document.getElementById('modal-title').innerText = title;
+      document.getElementById('modal-msg').innerText = msg;
+      modalActionCallback = onConfirm;
+      const cancelBtn = document.getElementById('modal-cancel-btn');
+      if (showCancel) cancelBtn.classList.remove('hidden'); else cancelBtn.classList.add('hidden');
+      document.getElementById('custom-modal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('custom-modal').classList.remove('active');
+      modalActionCallback = null;
+    }
+
+    function confirmModalAction() {
+      if (modalActionCallback) modalActionCallback();
+      closeModal();
+    }
+
+    function downloadReportImage() {
+      const reportElement = document.getElementById('report-card-to-capture');
+      if (typeof html2canvas !== 'undefined') {
+        html2canvas(reportElement, { scale: 2 }).then(canvas => {
+          const link = document.createElement('a');
+          link.download = `Symmetry_Report_${Date.now()}.png`;
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+        });
+      }
+    }
+
     function gridToPx(c, r) { return { x: 20 + c * 40, y: 20 + r * 40 }; }
     function getNearestNode(px, py) {
       let c = Math.round((px - 20) / 40), r = Math.round((py - 20) / 40);
-      if(c>=0 && c<=8 && r>=0 && r<=8 && Math.hypot(px - (20+c*40), py - (20+r*40)) < 22) return { x: c, y: r, px: 20+c*40, py: 20+r*40 };
+      if(c>=0 && c<=8 && r>=0 && r<=8 && Math.hypot(px - (20+c*40), py - (20+r*40)) < 24) return { x: c, y: r, px: 20+c*40, py: 20+r*40 };
       return null;
     }
+
     function getCanvasPos(e) {
       let r = u2Canvas.getBoundingClientRect();
       let cX = e.clientX, cY = e.clientY;
-      
-      // Fix for touch events (specially touchend which uses changedTouches)
       if (e.touches && e.touches.length > 0) {
-        cX = e.touches[0].clientX; 
-        cY = e.touches[0].clientY;
+        cX = e.touches[0].clientX; cY = e.touches[0].clientY;
       } else if (e.changedTouches && e.changedTouches.length > 0) {
-        cX = e.changedTouches[0].clientX; 
-        cY = e.changedTouches[0].clientY;
+        cX = e.changedTouches[0].clientX; cY = e.changedTouches[0].clientY;
       }
-      
-      if (cX === undefined || cY === undefined) return { x: 0, y: 0 };
-      
-      return { x: (cX - r.left)*(u2Canvas.width/r.width), y: (cY - r.top)*(u2Canvas.height/r.height) };
+      return { x: (cX - r.left) * (u2Canvas.width / r.width), y: (cY - r.top) * (u2Canvas.height / r.height) };
     }
 
     function initGridCanvas(q) {
@@ -1235,20 +1314,31 @@
         return u2UserPoints.find(p => p.x === pt.x && p.y === pt.y);
       }
 
+      function addLineBetween(p1, p2) {
+        let exists = u2UserLines.some(l => 
+          (l.p1.x === p1.x && l.p1.y === p1.y && l.p2.x === p2.x && l.p2.y === p2.y) ||
+          (l.p2.x === p1.x && l.p2.y === p1.y && l.p1.x === p2.x && l.p1.y === p2.y)
+        );
+        if (!exists) {
+          u2UserLines.push({ p1: p1, p2: p2 });
+        }
+      }
+
       const pointerDown = e => {
         let p = getCanvasPos(e);
         let node = getNearestNode(p.x, p.y);
         if(!node) return;
 
         let existingPt = findUserPoint(node);
-        if (existingPt) {
-          isDragging = true;
-          dragStartPoint = existingPt;
-          dragCurrentPos = { px: p.x, py: p.y };
-        } else {
-          u2UserPoints.push({ x: node.x, y: node.y });
-          renderGrid();
+        if (!existingPt) {
+          existingPt = { x: node.x, y: node.y };
+          u2UserPoints.push(existingPt);
         }
+
+        isDragging = true;
+        dragStartPoint = existingPt;
+        dragCurrentPos = { px: p.x, py: p.y };
+        renderGrid();
       };
 
       const pointerMove = e => {
@@ -1264,14 +1354,12 @@
         let targetNode = getNearestNode(p.x, p.y);
         if (targetNode) {
           let targetPt = findUserPoint(targetNode);
-          if (targetPt && (targetPt.x !== dragStartPoint.x || targetPt.y !== dragStartPoint.y)) {
-            let exists = u2UserLines.some(l => 
-              (l.p1.x === dragStartPoint.x && l.p1.y === dragStartPoint.y && l.p2.x === targetPt.x && l.p2.y === targetPt.y) ||
-              (l.p2.x === dragStartPoint.x && l.p2.y === dragStartPoint.y && l.p1.x === targetPt.x && l.p1.y === targetPt.y)
-            );
-            if (!exists) {
-              u2UserLines.push({ p1: dragStartPoint, p2: targetPt });
-            }
+          if (!targetPt) {
+            targetPt = { x: targetNode.x, y: targetNode.y };
+            u2UserPoints.push(targetPt);
+          }
+          if (targetPt.x !== dragStartPoint.x || targetPt.y !== dragStartPoint.y) {
+            addLineBetween(dragStartPoint, targetPt);
           }
         }
         isDragging = false; dragStartPoint = null; dragCurrentPos = null;
@@ -1283,7 +1371,6 @@
       u2Canvas.addEventListener('mouseup', pointerUp);
       u2Canvas.addEventListener('mouseleave', pointerUp);
 
-      // Touch events with preventDefault to stop scrolling while drawing on iPad/Mobile
       u2Canvas.addEventListener('touchstart', (e)=>{ e.preventDefault(); pointerDown(e); }, {passive:false});
       u2Canvas.addEventListener('touchmove', (e)=>{ e.preventDefault(); pointerMove(e); }, {passive:false});
       u2Canvas.addEventListener('touchend', (e)=>{ e.preventDefault(); pointerUp(e); }, {passive:false});
@@ -1310,7 +1397,6 @@
         u2Ctx.beginPath(); u2Ctx.moveTo(p, 20); u2Ctx.lineTo(p, 340); u2Ctx.stroke();
       }
 
-      // 繪製對稱軸 (第4行/列即 x=180 / y=180，或斜線)
       u2Ctx.strokeStyle = '#1e293b'; u2Ctx.lineWidth = 2; u2Ctx.setLineDash([6, 6]); u2Ctx.beginPath();
       if(u2AxisType.includes('vert') || u2AxisType==='hard-cross') { u2Ctx.moveTo(180, 10); u2Ctx.lineTo(180, 350); }
       if(u2AxisType.includes('horiz') || u2AxisType==='hard-cross') { u2Ctx.moveTo(10, 180); u2Ctx.lineTo(350, 180); }
@@ -1318,7 +1404,6 @@
       if(u2AxisType==='med-anti') { u2Ctx.moveTo(10, 350); u2Ctx.lineTo(350, 10); }
       u2Ctx.stroke(); u2Ctx.setLineDash([]);
 
-      // 繪製題目給定的綠色圖形與頂點
       if(u2GivenLines.length > 0) {
         u2Ctx.strokeStyle = '#10b981'; u2Ctx.lineWidth = 3.5; u2Ctx.lineCap = 'round'; u2Ctx.lineJoin = 'round';
         u2GivenLines.forEach(l => {
@@ -1332,7 +1417,6 @@
         });
       }
 
-      // 若答錯/題解，繪製藍色虛線目標解答
       if(u2ShowSolution && u2TargetLines) {
         u2Ctx.strokeStyle = '#ef4444'; u2Ctx.lineWidth = 3; u2Ctx.setLineDash([5, 5]);
         u2TargetLines.forEach(l => {
@@ -1342,14 +1426,12 @@
         u2Ctx.setLineDash([]);
       }
 
-      // 繪製學生已連的線段 (深藍色)
       u2Ctx.strokeStyle = '#1e3a8a'; u2Ctx.lineWidth = 3.5; u2Ctx.lineCap = 'round';
       u2UserLines.forEach(l => {
         let p1 = gridToPx(l.p1.x, l.p1.y), p2 = gridToPx(l.p2.x, l.p2.y);
         u2Ctx.beginPath(); u2Ctx.moveTo(p1.x, p1.y); u2Ctx.lineTo(p2.x, p2.y); u2Ctx.stroke();
       });
 
-      // 拖曳中的動態連線
       if(isDragging && dragStartPoint && dragCurrentPos) {
         let sp = gridToPx(dragStartPoint.x, dragStartPoint.y);
         u2Ctx.strokeStyle = '#6366f1'; u2Ctx.lineWidth = 2.5; u2Ctx.setLineDash([4, 4]);
@@ -1357,14 +1439,12 @@
         u2Ctx.setLineDash([]);
       }
 
-      // 繪製學生標記的藍色點
       u2Ctx.fillStyle = '#2563eb';
       u2UserPoints.forEach(pt => {
         let p = gridToPx(pt.x, pt.y);
         u2Ctx.beginPath(); u2Ctx.arc(p.x, p.y, 6.5, 0, Math.PI*2); u2Ctx.fill();
       });
 
-      // 網格交點灰圓點
       for(let c=0; c<=8; c++) for(let r=0; r<=8; r++) {
         let p = gridToPx(c,r);
         u2Ctx.fillStyle = '#94a3b8';
