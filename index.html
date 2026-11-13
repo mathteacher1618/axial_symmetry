@@ -739,9 +739,36 @@
         case 'letter_f': shapeSVG = `<path d="M 65,45 L 155,45 L 155,75 L 95,75 L 95,95 L 145,95 L 145,125 L 95,125 L 95,155 L 65,155 Z" fill="#f4a261" stroke="#e76f51" stroke-width="3"/>`; break;
         case 'letter_z': shapeSVG = `<path d="M 50,45 L 160,45 L 160,75 L 95,125 L 160,125 L 160,155 L 50,155 L 50,125 L 115,75 L 50,75 Z" fill="#2a9d8f" stroke="#264653" stroke-width="3"/>`; break;
         case 'letter_a': shapeSVG = `<path d="M 110,40 L 50,160 L 80,160 L 95,130 L 125,130 L 140,160 L 170,160 Z M 110,75 L 118,105 L 102,105 Z" fill="#00b4d8" stroke="#03045e" stroke-width="3"/>`; if(showSymmetryLine) lineSVG = `<line x1="110" y1="20" x2="110" y2="180" stroke="#e63946" stroke-width="2.5" stroke-dasharray="6,4"/>`; break;
-        case 'letter_h': shapeSVG = `<path d="M 60,45 L 90,45 L 90,85 L 130,85 L 130,45 L 160,45 L 160,155 L 130,155 L 130,115 L 90,115 L 90,155 L 60,155 Z" fill="#9d4edd" stroke="#3c096c" stroke-width="3"/>`; if(showSymmetryLine) lineSVG = `<line x1="110" y1="20" x2="110" y2="180" stroke="#e63946" stroke-width="2.5" stroke-dasharray="6,4"/>`; break;
-        case 'letter_x': shapeSVG = `<path d="M 60,40 L 110,85 L 160,40 L 180,60 L 135,100 L 180,140 L 160,160 L 110,115 L 60,160 L 40,140 L 85,100 L 40,60 Z" fill="#2a9d8f" stroke="#264653" stroke-width="3"/>`; if(showSymmetryLine) lineSVG = `<line x1="110" y1="20" x2="110" y2="180" stroke="#e63946" stroke-width="2.5" stroke-dasharray="6,4"/>`; break;
-        case 'star': shapeSVG = `<path d="M 110,35 Q 120,80 165,90 Q 120,100 110,145 Q 100,100 55,90 Q 100,80 110,35 Z" fill="#ffc6ff" stroke="#9d4edd" stroke-width="3"/>`; if(showSymmetryLine) lineSVG = `<line x1="110" y1="20" x2="110" y2="160" stroke="#e63946" stroke-width="2.5" stroke-dasharray="6,4"/>`; break;
+        case 'letter_h':
+          shapeSVG = `<path d="M 60,45 L 90,45 L 90,85 L 130,85 L 130,45 L 160,45 L 160,155 L 130,155 L 130,115 L 90,115 L 90,155 L 60,155 Z" fill="#9d4edd" stroke="#3c096c" stroke-width="3"/>`;
+          if(showSymmetryLine) {
+            lineSVG = `
+              <line x1="110" y1="20" x2="110" y2="180" stroke="#e63946" stroke-width="2.5" stroke-dasharray="6,4"/>
+              <line x1="40" y1="100" x2="180" y2="100" stroke="#e63946" stroke-width="2.5" stroke-dasharray="6,4"/>
+            `;
+          }
+          break;
+        case 'letter_x':
+          shapeSVG = `<path d="M 60,40 L 110,85 L 160,40 L 180,60 L 135,100 L 180,140 L 160,160 L 110,115 L 60,160 L 40,140 L 85,100 L 40,60 Z" fill="#2a9d8f" stroke="#264653" stroke-width="3"/>`;
+          if(showSymmetryLine) {
+            lineSVG = `
+              <line x1="110" y1="20" x2="110" y2="180" stroke="#e63946" stroke-width="2.5" stroke-dasharray="6,4"/>
+              <line x1="25" y1="100" x2="195" y2="100" stroke="#e63946" stroke-width="2.5" stroke-dasharray="6,4"/>
+            `;
+          }
+          break;
+        case 'star':
+          // 正四角星中心為 (110, 90)，外頂點半徑 55，共有 4 條對稱軸（垂直、水平及兩條對角線）
+          shapeSVG = `<path d="M 110,35 Q 120,80 165,90 Q 120,100 110,145 Q 100,100 55,90 Q 100,80 110,35 Z" fill="#ffc6ff" stroke="#9d4edd" stroke-width="3"/>`;
+          if(showSymmetryLine) {
+            lineSVG = `
+              <line x1="110" y1="20" x2="110" y2="160" stroke="#e63946" stroke-width="2.5" stroke-dasharray="6,4"/>
+              <line x1="40" y1="90" x2="180" y2="90" stroke="#e63946" stroke-width="2.5" stroke-dasharray="6,4"/>
+              <line x1="60" y1="40" x2="160" y2="140" stroke="#e63946" stroke-width="2.5" stroke-dasharray="6,4"/>
+              <line x1="160" y1="40" x2="60" y2="140" stroke="#e63946" stroke-width="2.5" stroke-dasharray="6,4"/>
+            `;
+          }
+          break;
       }
       return `<svg width="220" height="200" viewBox="0 0 220 200">${shapeSVG}${lineSVG}</svg>`;
     }
